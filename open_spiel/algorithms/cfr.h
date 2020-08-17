@@ -21,21 +21,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "open_spiel/abseil-cpp/absl/strings/string_view.h"
 #include "open_spiel/abseil-cpp/absl/types/optional.h"
 #include "open_spiel/policy.h"
 #include "open_spiel/spiel.h"
 
 namespace open_spiel {
 namespace algorithms {
-
-constexpr const char* kSerializeMetaSectionHeader = "[Meta]";
-constexpr const char* kSerializeGameSectionHeader = "[Game]";
-constexpr const char* kSerializeSolverTypeSectionHeader = "[SolverType]";
-constexpr const char* kSerializeSolverSpecificStateSectionHeader =
-    "[SolverSpecificState]";
-constexpr const char* kSerializeSolverValuesTableSectionHeader =
-    "[SolverValuesTable]";
 
 // A basic structure to store the relevant quantities.
 struct CFRInfoStateValues {
@@ -59,14 +50,8 @@ struct CFRInfoStateValues {
   bool empty() const { return legal_actions.empty(); }
   int num_actions() const { return legal_actions.size(); }
 
-  // A string representation of the information state values.
+  // A string representation of the information state values
   std::string ToString() const;
-
-  // A less verbose string representation used for serialization purposes. The
-  // double_precision parameter indicates the number of decimal places in
-  // floating point numbers formatting, value -1 formats doubles with lossless,
-  // non-portable bitwise representation hex strings.
-  std::string Serialize(int double_precision) const;
 
   // Samples from current policy using randomly generated z, adding epsilon
   // exploration (mixing in uniform).
@@ -75,36 +60,15 @@ struct CFRInfoStateValues {
   // Extracts the current policy. Note: assumes it is filled.
   ActionsAndProbs GetCurrentPolicy() const;
 
-  // Return index of the action within the vector of legal_actions,
-  // or exit with an error.
-  int GetActionIndex(Action a);
-
   std::vector<Action> legal_actions;
   std::vector<double> cumulative_regrets;
   std::vector<double> cumulative_policy;
   std::vector<double> current_policy;
 };
 
-CFRInfoStateValues DeserializeCFRInfoStateValues(absl::string_view serialized);
-
 // A type for tables holding CFR values.
 using CFRInfoStateValuesTable =
     std::unordered_map<std::string, CFRInfoStateValues>;
-
-// The result parameter is passed by pointer in order to avoid copying/moving
-// the string once the table is fully serialized (CFRInfoStateValuesTable
-// instances could be very large). See comments above
-// CFRInfoStateValues::Serialize(double_precision) for notes about the
-// double_precision parameter.
-void SerializeCFRInfoStateValuesTable(
-    const CFRInfoStateValuesTable& info_states, std::string* result,
-    int double_precision, std::string delimiter = "<~>");
-
-// Similarly as above, the result parameter is passed by pointer in order to
-// avoid copying/moving the table once fully deserialized.
-void DeserializeCFRInfoStateValuesTable(absl::string_view serialized,
-                                        CFRInfoStateValuesTable* result,
-                                        std::string delimiter = "<~>");
 
 // A policy that extracts the average policy from the CFR table values, which
 // can be passed to tabular exploitability.
@@ -169,10 +133,6 @@ class CFRSolverBase {
   CFRSolverBase(const Game& game, bool alternating_updates,
                 bool linear_averaging, bool regret_matching_plus,
                 bool random_initial_regrets = false, int seed = 0);
-  // The constructor below is used for deserialization purposes.
-  CFRSolverBase(std::shared_ptr<const Game> game, bool alternating_updates,
-                bool linear_averaging, bool regret_matching_plus, int iteration,
-                bool random_initial_regrets = false, int seed = 0);
   virtual ~CFRSolverBase() = default;
 
   // Performs one step of the CFR algorithm.
@@ -192,15 +152,8 @@ class CFRSolverBase {
     return std::shared_ptr<Policy>(new CFRCurrentPolicy(info_states_, nullptr));
   }
 
-  CFRInfoStateValuesTable& InfoStateValuesTable() { return info_states_; }
-
-  // See comments above CFRInfoStateValues::Serialize(double_precision) for
-  // notes about the double_precision parameter.
-  std::string Serialize(int double_precision = -1,
-                        std::string delimiter = "<~>") const;
-
  protected:
-  std::shared_ptr<const Game> game_;
+  const Game& game_;
 
   // Iteration to support linear_policy.
   int iteration_ = 0;
@@ -222,14 +175,6 @@ class CFRSolverBase {
 
   // Update the current policy for all information states.
   void ApplyRegretMatching();
-
-  // This method should return the type of itself so that it can be checked
-  // in different deserialization methods; one method for each subtype.
-  // For an example take a look at the CFRSolver::SerializeThisType() and
-  // DeserializeCFRSolver() methods.
-  virtual std::string SerializeThisType() const {
-    SpielFatalError("Serialization of the base class is not supported.");
-  }
 
  private:
   std::vector<double> ComputeCounterFactualRegretForActionProbs(
@@ -285,19 +230,7 @@ class CFRSolver : public CFRSolverBase {
                       /*alternating_updates=*/true,
                       /*linear_averaging=*/false,
                       /*regret_matching_plus=*/false) {}
-  // The constructor below is used for deserialization purposes.
-  CFRSolver(std::shared_ptr<const Game> game, int iteration)
-      : CFRSolverBase(game,
-                      /*alternating_updates=*/true,
-                      /*linear_averaging=*/false,
-                      /*regret_matching_plus=*/false, iteration) {}
-
- protected:
-  std::string SerializeThisType() const { return "CFRSolver"; }
 };
-
-std::unique_ptr<CFRSolver> DeserializeCFRSolver(const std::string& serialized,
-                                                std::string delimiter = "<~>");
 
 // CFR+ implementation.
 //
@@ -314,37 +247,7 @@ class CFRPlusSolver : public CFRSolverBase {
                       /*alternating_updates=*/true,
                       /*linear_averaging=*/true,
                       /*regret_matching_plus=*/true) {}
-  // The constructor below is used for deserialization purposes.
-  CFRPlusSolver(std::shared_ptr<const Game> game, int iteration)
-      : CFRSolverBase(game,
-                      /*alternating_updates=*/true,
-                      /*linear_averaging=*/false,
-                      /*regret_matching_plus=*/false, iteration) {}
-
- protected:
-  std::string SerializeThisType() const { return "CFRPlusSolver"; }
 };
-
-std::unique_ptr<CFRPlusSolver> DeserializeCFRPlusSolver(
-    const std::string& serialized, std::string delimiter = "<~>");
-
-struct PartiallyDeserializedCFRSolver {
-  PartiallyDeserializedCFRSolver(std::shared_ptr<const Game> game,
-                                 std::string solver_type,
-                                 std::string solver_specific_state,
-                                 std::string_view serialized_cfr_values_table)
-      : game(game),
-        solver_type(solver_type),
-        solver_specific_state(solver_specific_state),
-        serialized_cfr_values_table(serialized_cfr_values_table) {}
-  std::shared_ptr<const Game> game;
-  std::string solver_type;
-  std::string solver_specific_state;
-  absl::string_view serialized_cfr_values_table;
-};
-
-PartiallyDeserializedCFRSolver PartiallyDeserializeCFRSolver(
-    const std::string& serialized);
 
 }  // namespace algorithms
 }  // namespace open_spiel

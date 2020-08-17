@@ -59,34 +59,6 @@ void CFRBRTest_LeducPoker() {
             << std::endl;
 }
 
-void CFRBRTest_CFRBRSolverSerialization() {
-  auto game = LoadGame("kuhn_poker");
-  CFRBRSolver solver = CFRBRSolver(*game);
-  double exploitability0 = Exploitability(*game, *solver.AveragePolicy());
-
-  for (int i = 0; i < 50; i++) {
-    solver.EvaluateAndUpdatePolicy();
-  }
-  double exploitability1 = Exploitability(*game, *solver.AveragePolicy());
-  SPIEL_CHECK_GT(exploitability0, exploitability1);
-
-  std::string serialized = solver.Serialize();
-  std::unique_ptr<CFRBRSolver> deserialized_solver =
-      DeserializeCFRBRSolver(serialized);
-  SPIEL_CHECK_EQ(solver.InfoStateValuesTable().size(),
-                 deserialized_solver->InfoStateValuesTable().size());
-  double exploitability2 =
-      Exploitability(*game, *deserialized_solver->AveragePolicy());
-  SPIEL_CHECK_FLOAT_NEAR(exploitability1, exploitability2, 1e-4);
-
-  for (int i = 0; i < 50; i++) {
-    deserialized_solver->EvaluateAndUpdatePolicy();
-  }
-  double exploitability3 =
-      Exploitability(*game, *deserialized_solver->AveragePolicy());
-  SPIEL_CHECK_GT(exploitability2, exploitability3);
-}
-
 }  // namespace
 }  // namespace algorithms
 }  // namespace open_spiel
@@ -96,5 +68,4 @@ namespace algorithms = open_spiel::algorithms;
 int main(int argc, char** argv) {
   algorithms::CFRBRTest_KuhnPoker();
   algorithms::CFRBRTest_LeducPoker();
-  algorithms::CFRBRTest_CFRBRSolverSerialization();
 }

@@ -50,7 +50,7 @@ class NFSP(rl_agent.AbstractAgent):
 
   See open_spiel/python/examples/kuhn_nfsp.py for an usage example.
   """
-
+  count = 0
   def __init__(self,
                session,
                player_id,
@@ -79,6 +79,7 @@ class NFSP(rl_agent.AbstractAgent):
     self._reservoir_buffer = ReservoirBuffer(reservoir_buffer_capacity)
     self._prev_timestep = None
     self._prev_action = None
+    NFSP.count += 1
 
     # Step counter to keep track of learning.
     self._step_counter = 0

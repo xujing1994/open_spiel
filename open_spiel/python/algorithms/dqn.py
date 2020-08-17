@@ -351,7 +351,7 @@ class DQN(rl_agent.AbstractAgent):
     return decayed_epsilon
 
   def learn(self):
-    """Compute the loss on sampled transitions and perform a Q-network update.
+    """Compute the loss on sampled transitions and perform a Q-network update.  # how to perform a Q-network updata, computation of q-value includes opponents' average strategy profile
 
     If there are not enough elements in the buffer, no loss is computed and
     `None` is returned instead.

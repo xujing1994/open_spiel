@@ -162,12 +162,10 @@ class HeartsState : public State {
   void ApplyPlayAction(int card);
 
   void ComputeScore();
-  int CurrentTrickIndex() const {
-    return std::min(num_cards_played_ / kNumPlayers,
-                    static_cast<int>(tricks_.size()));
+  Trick& CurrentTrick() { return tricks_[num_cards_played_ / kNumPlayers]; }
+  const Trick& CurrentTrick() const {
+    return tricks_[num_cards_played_ / kNumPlayers];
   }
-  Trick& CurrentTrick() { return tricks_[CurrentTrickIndex()]; }
-  const Trick& CurrentTrick() const { return tricks_[CurrentTrickIndex()]; }
   std::array<std::string, kNumSuits> FormatHand(int player,
                                                 bool mark_voids) const;
   std::string FormatPlay() const;

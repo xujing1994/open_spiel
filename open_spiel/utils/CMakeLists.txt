@@ -6,7 +6,6 @@ add_library (utils OBJECT
   data_logger.cc
   file.h
   file.cc
-  functional.h
   json.h
   json.cc
   logger.h
@@ -15,7 +14,6 @@ add_library (utils OBJECT
   random.cc
   run_python.h
   run_python.cc
-  serialization.h
   stats.h
   tensor_view.h
   thread.h
@@ -39,10 +37,6 @@ add_test(data_logger_test data_logger_test)
 add_executable(file_test file_test.cc ${OPEN_SPIEL_OBJECTS}
                $<TARGET_OBJECTS:tests>)
 add_test(file_test file_test)
-
-add_executable(functional_test functional_test.cc ${OPEN_SPIEL_OBJECTS}
-               $<TARGET_OBJECTS:tests>)
-add_test(functional_test functional_test)
 
 add_executable(json_test json_test.cc ${OPEN_SPIEL_OBJECTS}
                $<TARGET_OBJECTS:tests>)

@@ -202,29 +202,7 @@ std::string UniversalPokerState::ToString() const {
 
 std::string UniversalPokerState::ActionToString(Player player,
                                                 Action move) const {
-  std::string move_str;
-  if (IsChanceNode()) {
-    move_str = absl::StrCat("Deal(", move, ")");
-  } else if (static_cast<ActionType>(move) == ActionType::kFold) {
-    move_str = "Fold";
-  } else if (static_cast<ActionType>(move) == ActionType::kCall) {
-    move_str = "Call";
-  } else if (betting_abstraction_ == BettingAbstraction::kFULLGAME) {
-    SPIEL_CHECK_GE(move, 2);
-    const int big_blind =
-        static_cast<const UniversalPokerGame *>(GetGame().get())->big_blind();
-    const int raise_size = (move - 1) * big_blind;
-    move_str = absl::StrCat("Bet", raise_size);
-  } else if (static_cast<ActionType>(move) == ActionType::kBet) {
-    SPIEL_CHECK_EQ(betting_abstraction_, BettingAbstraction::kFCPA);
-    move_str = "Bet";
-  } else if (static_cast<ActionType>(move) == ActionType::kAllIn) {
-    SPIEL_CHECK_EQ(betting_abstraction_, BettingAbstraction::kFCPA);
-    move_str = "AllIn";
-  } else {
-    SpielFatalError(absl::StrCat("Unknown action: ", move));
-  }
-  return absl::StrCat("player=", player, " move=", move_str);
+  return absl::StrCat("player=", player, " move=", move);
 }
 
 bool UniversalPokerState::IsTerminal() const {
@@ -531,11 +509,6 @@ void UniversalPokerState::DoApplyAction(Action action_id) {
       ApplyChoiceAction(ACTION_CHECK_CALL, 0);
       return;
     }
-    if (betting_abstraction_ == BettingAbstraction::kFC) {
-      SpielFatalError(absl::StrCat(
-          "Tried to apply action that was not fold or call. Action: ",
-          State::ActionToString(action_id)));
-    }
     if (betting_abstraction_ != BettingAbstraction::kFULLGAME) {
       if (action_int == kBet) {
         ApplyChoiceAction(ACTION_BET, potSize_);
@@ -545,12 +518,6 @@ void UniversalPokerState::DoApplyAction(Action action_id) {
         ApplyChoiceAction(ACTION_ALL_IN, allInSize_);
         return;
       }
-    }
-    if (betting_abstraction_ != BettingAbstraction::kFULLGAME) {
-      SpielFatalError(absl::StrCat(
-          "Tried to apply action that was not allowed by the betting "
-          "abstraction. Action: ",
-          State::ActionToString(action_id)));
     }
     if (action_int >= 2 && action_int <= NumDistinctActions()) {
       const int big_blind =

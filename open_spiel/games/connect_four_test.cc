@@ -59,24 +59,24 @@ void BasicSerializationTest() {
   SPIEL_CHECK_EQ(state->ToString(), state2->ToString());
 }
 
-void CheckFullBoardDraw() {
+void DeserializeDraw() {
   std::shared_ptr<const Game> game = LoadGame("connect_four");
-  ConnectFourState state(game,
+  auto state = game->DeserializeState(
       "ooxxxoo\n"
       "xxoooxx\n"
       "ooxxxoo\n"
       "xxoooxx\n"
       "ooxxxoo\n"
       "xxoooxx\n");
-  SPIEL_CHECK_EQ(state.ToString(),
+  SPIEL_CHECK_EQ(state->ToString(),
                  "ooxxxoo\n"
                  "xxoooxx\n"
                  "ooxxxoo\n"
                  "xxoooxx\n"
                  "ooxxxoo\n"
                  "xxoooxx\n");
-  SPIEL_CHECK_TRUE(state.IsTerminal());
-  SPIEL_CHECK_EQ(state.Returns(), (std::vector<double>{0, 0}));
+  SPIEL_CHECK_TRUE(state->IsTerminal());
+  SPIEL_CHECK_EQ(state->Returns(), (std::vector<double>{0, 0}));
 }
 
 }  // namespace
@@ -87,5 +87,5 @@ int main(int argc, char **argv) {
   open_spiel::connect_four::BasicConnectFourTests();
   open_spiel::connect_four::FastLoss();
   open_spiel::connect_four::BasicSerializationTest();
-  open_spiel::connect_four::CheckFullBoardDraw();
+  open_spiel::connect_four::DeserializeDraw();
 }

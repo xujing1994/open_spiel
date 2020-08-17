@@ -183,12 +183,7 @@ else
   export PYTHONPATH=$PYTHONPATH:$pwd/../open_spiel
   export PYTHONPATH=$PYTHONPATH:$pwd/python  # For pyspiel bindings
 
-  # Build in testing, so that we can run tests fast.
-  cmake -DPython_TARGET_VERSION=${PYVERSION}         \
-        -DCMAKE_CXX_COMPILER=${CXX}                  \
-        -DCMAKE_PREFIX_PATH=${LIBCXXWRAP_JULIA_DIR}  \
-        -DBUILD_TYPE=Testing                         \
-        ../open_spiel
+  cmake -DPython_TARGET_VERSION=${PYVERSION} -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_PREFIX_PATH=${LIBCXXWRAP_JULIA_DIR} ../open_spiel
 
   if [ "$ARG_test_only" != "all" ]
   then

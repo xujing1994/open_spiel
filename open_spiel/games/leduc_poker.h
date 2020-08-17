@@ -43,7 +43,6 @@
 #include <utility>
 #include <vector>
 
-#include "open_spiel/observer.h"
 #include "open_spiel/spiel.h"
 
 namespace open_spiel {
@@ -65,7 +64,6 @@ inline constexpr int kNumInfoStates =
     936;  // Number of info states in the 2P game with default params.
 
 class LeducGame;
-class LeducObserver;
 
 enum ActionType { kFold = 0, kCall = 1, kRaise = 2 };
 
@@ -123,8 +121,6 @@ class LeducState : public State {
   void DoApplyAction(Action move) override;
 
  private:
-  friend class LeducObserver;
-
   int NextPlayer() const;
   void ResolveWinner();
   bool ReadyForNextRound() const;
@@ -133,7 +129,6 @@ class LeducState : public State {
   void SequenceAppendMove(int move);
   void Ante(Player player, int amount);
   void SetPrivate(Player player, Action move);
-  int NumObservableCards() const;
 
   // Fields sets to bad/invalid values. Use Game::NewInitialState().
   Player cur_player_;
@@ -189,28 +184,12 @@ class LeducGame : public Game {
   }
   std::vector<int> InformationStateTensorShape() const override;
   std::vector<int> ObservationTensorShape() const override;
-  constexpr int MaxBetsPerRound() const {
-    // E.g. longest round for 4-player is 10 bets:
-    //   check, check, check, bet, call, call, raise, call, call, call
-    // = 1 bet + 1 raise + (num_players_-1)*2 calls + (num_players_-2) calls
-    return 3 * num_players_ - 2;
-  }
   int MaxGameLength() const override {
-    // 2 rounds.
-    return 2 * MaxBetsPerRound();
+    // 2 rounds. Longest one for e.g. 4-player is, e.g.:
+    //   check, check, check, raise, call, call, raise, call, call, call
+    // = 2 raises + (num_players_-1)*2 calls + (num_players_-2) calls
+    return 2 * (2 + (num_players_ - 1) * 2 + (num_players_ - 2));
   }
-  int NumObservableCards() const {
-    return suit_isomorphism_ ? total_cards_ / 2 : total_cards_;
-  }
-
-  // New Observation API
-  std::shared_ptr<Observer> MakeObserver(
-      absl::optional<IIGObservationType> iig_obs_type,
-      const GameParameters& params) const override;
-
-  // Used to implement the old observation API.
-  std::shared_ptr<LeducObserver> default_observer_;
-  std::shared_ptr<LeducObserver> info_state_observer_;
 
  private:
   int num_players_;  // Number of players.

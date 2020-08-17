@@ -28,6 +28,7 @@ from open_spiel.python import rl_environment
 from open_spiel.python.algorithms import exploitability
 from open_spiel.python.algorithms import nfsp
 
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer("num_train_episodes", int(3e6),
@@ -98,6 +99,7 @@ def main(unused_argv):
                   FLAGS.reservoir_buffer_capacity, FLAGS.anticipatory_param,
                   **kwargs) for idx in range(num_players)
     ]
+
     expl_policies_avg = NFSPPolicies(env, agents, nfsp.MODE.average_policy)
 
     sess.run(tf.global_variables_initializer())
@@ -105,7 +107,7 @@ def main(unused_argv):
       if (ep + 1) % FLAGS.eval_every == 0:
         losses = [agent.loss for agent in agents]
         logging.info("Losses: %s", losses)
-        expl = exploitability.exploitability(env.game, expl_policies_avg)
+        expl_list, expl = exploitability.exploitability(env.game, expl_policies_avg)
         logging.info("[%s] Exploitability AVG %s", ep + 1, expl)
         logging.info("_____________________________________________")
 

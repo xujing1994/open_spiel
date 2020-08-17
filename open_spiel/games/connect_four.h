@@ -76,6 +76,7 @@ class ConnectFourState : public State {
   void ObservationTensor(Player player,
                          absl::Span<float> values) const override;
   std::unique_ptr<State> Clone() const override;
+  std::string Serialize() const override;
 
  protected:
   void DoApplyAction(Action move) override;
@@ -112,6 +113,8 @@ class ConnectFourGame : public Game {
     return {kCellStates, kRows, kCols};
   }
   int MaxGameLength() const override { return kNumCells; }
+  std::unique_ptr<State> DeserializeState(
+      const std::string& str) const override;
 };
 
 inline std::ostream& operator<<(std::ostream& stream, const CellState& state) {

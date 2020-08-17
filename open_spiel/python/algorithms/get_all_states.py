@@ -52,9 +52,9 @@ def _get_subgames_states(state, all_states, depth_limit, depth,
 
 
 def get_all_states(game,
-                   depth_limit=-1,
-                   include_terminals=True,
-                   include_chance_states=False,
+                   depth_limit,
+                   include_terminals,
+                   include_chance_states,
                    to_string=lambda s: s.history_str(),
                    stop_if_encountered=True):
   """Gets all states in the game, indexed by their string representation.
